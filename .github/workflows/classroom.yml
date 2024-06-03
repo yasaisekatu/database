@@ -1,0 +1,50 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: TestDBAccess
+      id: testdbaccess
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: TestDBAccess
+        setup-command: ''
+        command: make test_in_docker FILE=tests/TestDBAccess.py
+        timeout: 3
+        max-score: 1
+    - name: TestDBStructure
+      id: testdbstructure
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: TestDBStructure
+        setup-command: ''
+        command: make test_in_docker FILE=tests/TestDBStructure.py
+        timeout: 1
+        max-score: 1
+    - name: TestDBData
+      id: testdbdata
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: TestDBData
+        setup-command: ''
+        command: make test_in_docker FILE=tests/TestDBData.py
+        timeout: 1
+        max-score: 1
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TESTDBACCESS_RESULTS: "${{steps.testdbaccess.outputs.result}}"
+        TESTDBSTRUCTURE_RESULTS: "${{steps.testdbstructure.outputs.result}}"
+        TESTDBDATA_RESULTS: "${{steps.testdbdata.outputs.result}}"
+      with:
+        runners: testdbaccess,testdbstructure,testdbdata
